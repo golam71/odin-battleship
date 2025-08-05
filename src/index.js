@@ -1,5 +1,5 @@
 import "./css/style.css";
-import { hello } from "./js/hello.js";
+import { hello } from "./js/ship.js";
 
 console.log("working");
 
