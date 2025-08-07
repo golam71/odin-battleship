@@ -1,9 +1,25 @@
 export default class Ship {
-  constructor(name, length) {
+  constructor(name) {
     this.name = name;
-    this.length = length;
+    this.length = this.setLength(name);
     this.hits = 0;
-    this.char = name[0];
+  }
+
+  setLength(name) {
+    switch (name) {
+      case "Carrier":
+        return 5;
+      case "Battleship":
+        return 4;
+      case "Cruiser":
+        return 3;
+      case "Destroyer":
+        return 2;
+      case "Submarine":
+        return 1;
+      default:
+        return 0;
+    }
   }
 
   hit() {
