@@ -40,4 +40,15 @@ export default class Gameboard {
       this.board[y][x] = { status: "miss" };
     }
   }
+  getMissedAttacks() {
+    const misses = [];
+    for (let y = 0; y < 10; y++) {
+      for (let x = 0; x < 10; x++) {
+        if (this.board[y][x]?.status === "miss") {
+          misses.push([x, y]);
+        }
+      }
+    }
+    return misses;
+  }
 }
