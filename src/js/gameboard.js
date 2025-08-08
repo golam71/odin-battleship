@@ -51,4 +51,15 @@ export default class Gameboard {
     }
     return misses;
   }
+  allShipsSunk() {
+    for (let y = 0; y < 10; y++) {
+      for (let x = 0; x < 10; x++) {
+        const cell = this.board[y][x];
+        if (typeof cell?.hit === "function" && !cell.isSunk()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
