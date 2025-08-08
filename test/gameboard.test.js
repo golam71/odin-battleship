@@ -1,32 +1,74 @@
-import Gameboard from "../src/js/gameboard.js";
 import Ship from "../src/js/ship.js";
+import Gameboard from "../src/js/gameboard.js";
 
-const gameboard = new Gameboard("Player");
-const ship = new Ship("Destroyer");
+describe("Gameboard Class", () => {
+  let gameboard;
+  let ship;
 
-test("Gameboard to have 10x10 grid", () => {
-  expect(gameboard.board.length).toBe(10);
-  for (let i = 0; i < gameboard.board.length; i++) {
-    expect(gameboard.board[i].length).toBe(10);
-  }
-});
+  beforeEach(() => {
+    gameboard = new Gameboard("Player");
+    ship = new Ship("Destroyer");
+  });
 
-test("Gameboard to be able to place ships horizontally", () => {
-  gameboard.placeShip(ship, [2, 0], "horizontal");
-  for (let i = 0; i < ship.length; i++) {
-    expect(gameboard.board[2][0 + i].name).toBe(ship.name);
-  }
-});
+  describe("Initialization", () => {
+    test("should create 10x10 board", () => {
+      expect(gameboard.board.length).toBe(10);
+      gameboard.board.forEach((row) => {
+        expect(row.length).toBe(10);
+        expect(row.every((cell) => cell === 0)).toBe(true);
+      });
+    });
+  });
 
-test("Gameboard to be able to place ships vertically", () => {
-  gameboard.placeShip(ship, [5, 0], "vertical");
-  for (let i = 0; i < ship.length; i++) {
-    expect(gameboard.board[5 + i][0].name).toBe(ship.name);
-    // console.log(gameboard.board)
-  }
-});
+  describe("placeShip() method", () => {
+    test("should place horizontal ship correctly", () => {
+      gameboard.placeShip(ship, [3, 4], "horizontal");
+      expect(gameboard.board[4][3]).toBe(ship);
+      expect(gameboard.board[4][4]).toBe(ship);
+      expect(gameboard.board[4][5]).toBe(0); // Next cell should be empty
+    });
 
-test("Ship to able to take hits via gameboard", () => {
-  gameboard.receiveAttack([5, 0]);
-  expect(gameboard.board[5][0]).toBe("x");
+    test("should place vertical ship correctly", () => {
+      gameboard.placeShip(ship, [3, 4], "vertical");
+      expect(gameboard.board[4][3]).toBe(ship);
+      expect(gameboard.board[5][3]).toBe(ship);
+      expect(gameboard.board[6][3]).toBe(0); // Next cell should be empty
+    });
+
+    test("should throw error when out of bounds", () => {
+      expect(() => gameboard.placeShip(ship, [9, 9], "horizontal")).toThrow(
+        "Not enough space"
+      );
+    });
+
+    test("should throw error when space occupied", () => {
+      gameboard.placeShip(ship, [3, 4], "horizontal");
+      const newShip = new Ship("Submarine");
+      expect(() => gameboard.placeShip(newShip, [3, 4], "horizontal")).toThrow(
+        "Space already taken"
+      );
+    });
+  });
+
+  describe("receiveAttack() method", () => {
+    test("should hit a ship", () => {
+      gameboard.placeShip(ship, [3, 4], "horizontal");
+      gameboard.receiveAttack([3, 4]);
+      expect(ship.hits).toBe(1);
+      expect(gameboard.board[4][3].status).toBe("hit");
+    });
+
+    test("should record miss", () => {
+      gameboard.receiveAttack([3, 4]);
+      expect(gameboard.board[4][3].status).toBe("miss");
+    });
+
+    test("should not hit same spot twice", () => {
+      gameboard.placeShip(ship, [3, 4], "horizontal");
+      gameboard.receiveAttack([3, 4]);
+      const initialHits = ship.hits;
+      gameboard.receiveAttack([3, 4]);
+      expect(ship.hits).toBe(initialHits);
+    });
+  });
 });
