@@ -1,0 +1,67 @@
+.placeShips {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+
+  table {
+    border-collapse: collapse;
+
+    td {
+      border: 1px solid;
+      height: 30px;
+      width: 30px;
+    }
+  }
+
+  .toggle-btn,
+  .dropdown-btn {
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .placed {
+    background-color: lightgray;
+  }
+
+  .hover-red {
+    background-color: red;
+  }
+
+  .hover {
+    background-color: darkkhaki;
+  }
+
+  .custom-dropdown {
+    position: relative;
+    display: inline-block;
+
+    .dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      border: 1px solid #ccc;
+      background-color: white;
+      min-width: 150px;
+      z-index: 1000;
+
+      .dropdown-option {
+        padding: 5px 10px;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #eee;
+        }
+      }
+    }
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+  }
+}
