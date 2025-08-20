@@ -26,11 +26,11 @@
     font-size: 14px;
   }
   .placed {
-    background-color: lightgray;
+    background-color: lightgreen !important;
   }
 
   .hover-red {
-    background-color: red;
+    background-color: red !important;
   }
 
   .hover {
