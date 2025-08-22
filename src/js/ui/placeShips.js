@@ -1,27 +1,37 @@
 import "../../css/placeShips.css";
+import "../ship.js";
 import Ship from "../ship.js";
 
 export default function placeShips() {
   return new Promise(() => {
     document.body.classList.add("placeShips");
 
-    const heading = Object.assign(document.createElement("h1"), {
-      textContent: "Place Your Ships",
-    });
+    const heading = document.createElement("h1");
+    heading.textContent = "Place Your Ships";
     document.body.appendChild(heading);
 
+    const orientationBtn = document.createElement("button");
+    orientationBtn.textContent = "Orientation: Horizontal";
+    orientationBtn.className = "toggle-btn";
     let horizontal = true;
-    const orientationBtn = Object.assign(document.createElement("button"), {
-      textContent: "Orientation: Horizontal",
-      className: "toggle-btn",
-      onclick() {
-        horizontal = !horizontal;
-        this.textContent = `Orientation: ${
-          horizontal ? "Horizontal" : "Vertical"
-        }`;
-      },
-    });
+    orientationBtn.onclick = () => {
+      horizontal = !horizontal;
+      orientationBtn.textContent =
+        "Orientation: " + (horizontal ? "Horizontal" : "Vertical");
+    };
     document.body.appendChild(orientationBtn);
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "custom-dropdown";
+
+    const dropBtn = document.createElement("button");
+    dropBtn.textContent = "Select Ship ▼";
+    dropBtn.className = "dropdown-btn";
+    dropdown.appendChild(dropBtn);
+
+    const dropList = document.createElement("div");
+    dropList.className = "dropdown-list";
+    dropList.style.display = "none";
 
     const ships = [
       "Carrier",
@@ -30,81 +40,107 @@ export default function placeShips() {
       "Destroyer",
       "Submarine",
     ];
-    let selectedShip = ships[0];
-
-    const dropdown = document.createElement("div");
-    dropdown.className = "custom-dropdown";
-
-    const dropBtn = Object.assign(document.createElement("button"), {
-      textContent: `${selectedShip} ▼`,
-      className: "dropdown-btn",
-      onclick() {
-        dropList.style.display =
-          dropList.style.display === "block" ? "none" : "block";
-      },
-    });
-    dropdown.appendChild(dropBtn);
-
-    const dropList = document.createElement("div");
-    dropList.className = "dropdown-list";
-    dropList.style.display = "none";
+    let selectedShip = null;
 
     ships.forEach((ship) => {
-      const option = Object.assign(document.createElement("div"), {
-        textContent: ship,
-        className: "dropdown-option",
-        onclick() {
-          selectedShip = ship;
-          dropBtn.textContent = `${ship} ▼`;
-          dropList.style.display = "none";
-        },
-      });
+      const option = document.createElement("div");
+      option.textContent = ship;
+      option.className = "dropdown-option";
+      option.onclick = () => {
+        selectedShip = ship;
+        dropBtn.textContent = ship + " ▼";
+        dropList.style.display = "none";
+      };
+      dropBtn.textContent = "Carrier" + " ▼";
       dropList.appendChild(option);
     });
 
     dropdown.appendChild(dropList);
     document.body.appendChild(dropdown);
 
+    dropBtn.onclick = () => {
+      dropList.style.display =
+        dropList.style.display === "block" ? "none" : "block";
+    };
+
     const table = document.createElement("table");
     for (let i = 0; i < 10; i++) {
       const tr = document.createElement("tr");
-      for (let j = 0; j < 10; j++) tr.appendChild(document.createElement("td"));
+      for (let j = 0; j < 10; j++) {
+        const td = document.createElement("td");
+        tr.appendChild(td);
+      }
       table.appendChild(tr);
     }
-    const container = document.createElement("div");
-    container.appendChild(table);
-    document.body.appendChild(container);
+    const div = document.createElement("div");
+    div.appendChild(table);
+    document.body.appendChild(div);
 
-    function highlightCells(length, x, y, horizontal) {
-      const cells = [];
-      let outOfBounds = false;
+    // acual placement
 
-      for (let i = 0; i < length; i++) {
-        const cell = horizontal
-          ? table.rows[x]?.cells[y + i]
-          : table.rows[x + i]?.cells[y];
-        if (!cell) {
-          outOfBounds = true;
-          break;
-        }
-        cells.push(cell);
-      }
-
-      cells.forEach((cell) => {
-        cell.classList.add(outOfBounds ? "hover-red" : "hover");
-      });
-    }
-
-    table.querySelectorAll("td").forEach((td) =>
+    document.querySelectorAll("td").forEach((td) => {
       td.addEventListener("mouseover", () => {
-        table.querySelectorAll("td").forEach((c) => {
-          c.classList.remove("hover", "hover-red");
+        let shipName = document
+          .getElementsByClassName("dropdown-btn")[0]
+          .innerText.split(" ")[0];
+        let orientation = document
+          .getElementsByClassName("toggle-btn")[0]
+          .innerText.split(" ")[1];
+
+        //
+        document.querySelectorAll("td").forEach((td) => {
+          td.classList.remove("hover");
+          td.classList.remove("hover-red");
         });
-        const length = new Ship(selectedShip).length;
-        const x = td.parentElement.rowIndex;
-        const y = td.cellIndex;
-        highlightCells(length, x, y, horizontal);
-      })
-    );
+
+        switch (shipName) {
+          case "Carrier":
+          case "Battleship":
+          case "Cruiser":
+          case "Destroyer":
+          case "Submarine": {
+            function highlightCells(length, x, y, orientation) {
+              const table = document.getElementsByTagName("table")[0];
+              let outOfBounds = false;
+
+              if (orientation === "Horizontal") {
+                for (let i = 0; i < length; i++) {
+                  if (!table.rows[x] || !table.rows[x].cells[y + i]) {
+                    outOfBounds = true;
+                    break;
+                  }
+                }
+                for (let i = 0; i < length; i++) {
+                  const cell = table.rows[x]?.cells[y + i];
+                  if (cell) {
+                    cell.classList.add(outOfBounds ? "hover-red" : "hover");
+                  }
+                }
+              } else {
+                for (let i = 0; i < length; i++) {
+                  if (!table.rows[x + i] || !table.rows[x + i].cells[y]) {
+                    outOfBounds = true;
+                    break;
+                  }
+                }
+                for (let i = 0; i < length; i++) {
+                  const cell = table.rows[x + i]?.cells[y];
+                  if (cell) {
+                    cell.classList.add(outOfBounds ? "hover-red" : "hover");
+                  }
+                }
+              }
+            }
+
+            let length = new Ship(shipName).length;
+            let x = td.parentElement.rowIndex;
+            let y = td.cellIndex;
+
+            highlightCells(length, x, y, orientation);
+            break;
+          }
+        }
+      });
+    });
   });
 }
