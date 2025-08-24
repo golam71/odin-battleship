@@ -24,3 +24,6 @@ button {
 * {
   transition: all 0.1s linear;
 }
+td {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}

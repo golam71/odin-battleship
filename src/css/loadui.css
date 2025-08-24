@@ -20,4 +20,32 @@
   #computerTable td:hover {
     background-color: burlywood;
   }
+  /*  */
+  .placed {
+    background-color: lightgreen !important;
+  }
+
+  .hover-red {
+    background-color: red !important;
+  }
+
+  .hover {
+    background-color: darkkhaki;
+  }
+  /*  */
+  .hit {
+    background-color: red !important;
+    color: white;
+  }
+
+  .miss {
+    background-color: lightblue !important;
+  }
+  * {
+    border-color: black !important;
+  }
+  #computerTable td.hit:hover,
+  #computerTable td.miss:hover {
+    cursor: not-allowed;
+  }
 }

@@ -1,26 +1,29 @@
 import "../../css/placeShips.css";
-import "../ship.js";
 import Ship from "../ship.js";
 
 export default function placeShips() {
-  return new Promise(() => {
+  return new Promise((resolve) => {
     document.body.classList.add("placeShips");
-
+    let shipsArray = [];
+    // Heading
     const heading = document.createElement("h1");
     heading.textContent = "Place Your Ships";
     document.body.appendChild(heading);
 
+    // Orientation toggle
+    let horizontal = true;
     const orientationBtn = document.createElement("button");
     orientationBtn.textContent = "Orientation: Horizontal";
     orientationBtn.className = "toggle-btn";
-    let horizontal = true;
     orientationBtn.onclick = () => {
       horizontal = !horizontal;
-      orientationBtn.textContent =
-        "Orientation: " + (horizontal ? "Horizontal" : "Vertical");
+      orientationBtn.textContent = `Orientation: ${
+        horizontal ? "Horizontal" : "Vertical"
+      }`;
     };
     document.body.appendChild(orientationBtn);
 
+    // Dropdown
     const dropdown = document.createElement("div");
     dropdown.className = "custom-dropdown";
 
@@ -32,6 +35,8 @@ export default function placeShips() {
     const dropList = document.createElement("div");
     dropList.className = "dropdown-list";
     dropList.style.display = "none";
+    dropdown.appendChild(dropList);
+    document.body.appendChild(dropdown);
 
     const ships = [
       "Carrier",
@@ -42,103 +47,116 @@ export default function placeShips() {
     ];
     let selectedShip = null;
 
-    ships.forEach((ship) => {
+    ships.forEach((ship, index) => {
       const option = document.createElement("div");
       option.textContent = ship;
       option.className = "dropdown-option";
       option.onclick = () => {
         selectedShip = ship;
-        dropBtn.textContent = ship + " ▼";
+        dropBtn.textContent = `${ship} ▼`;
         dropList.style.display = "none";
       };
-      dropBtn.textContent = "Carrier" + " ▼";
       dropList.appendChild(option);
+      if (index === 0) option.click(); // default to first ship
     });
-
-    dropdown.appendChild(dropList);
-    document.body.appendChild(dropdown);
 
     dropBtn.onclick = () => {
       dropList.style.display =
         dropList.style.display === "block" ? "none" : "block";
     };
 
+    // Table grid
     const table = document.createElement("table");
-    for (let i = 0; i < 10; i++) {
+    for (let y = 0; y < 10; y++) {
       const tr = document.createElement("tr");
-      for (let j = 0; j < 10; j++) {
-        const td = document.createElement("td");
-        tr.appendChild(td);
+      for (let x = 0; x < 10; x++) {
+        tr.appendChild(document.createElement("td"));
       }
       table.appendChild(tr);
     }
-    const div = document.createElement("div");
-    div.appendChild(table);
-    document.body.appendChild(div);
+    document.body.appendChild(table);
 
-    // acual placement
+    // Helpers
+    function isPositionValid(x, y, length, orientation) {
+      if (orientation === "Horizontal") {
+        if (x + length > 10) return false;
+        return [...Array(length)].every(
+          (_, i) => !table.rows[y].cells[x + i].classList.contains("placed")
+        );
+      } else {
+        if (y + length > 10) return false;
+        return [...Array(length)].every(
+          (_, i) => !table.rows[y + i].cells[x].classList.contains("placed")
+        );
+      }
+    }
 
+    function highlightCells(x, y, length, orientation) {
+      document
+        .querySelectorAll("td")
+        .forEach((td) => td.classList.remove("hover"));
+      if (orientation === "Horizontal") {
+        for (let i = 0; i < length; i++)
+          table.rows[y].cells[x + i].classList.add("hover");
+      } else {
+        for (let i = 0; i < length; i++)
+          table.rows[y + i].cells[x].classList.add("hover");
+      }
+    }
+
+    function placeShip(x, y, length, orientation, shipName) {
+      if (orientation === "Horizontal") {
+        for (let i = 0; i < length; i++) {
+          table.rows[y].cells[x + i].classList.add("placed");
+          table.rows[y].cells[x + i].innerText = shipName[0];
+        }
+      } else {
+        for (let i = 0; i < length; i++) {
+          table.rows[y + i].cells[x].classList.add("placed");
+          table.rows[y + i].cells[x].innerText = shipName[0];
+        }
+      }
+      // remove from dropdown
+      [...dropList.childNodes].forEach((item) => {
+        if (item.innerText === shipName) item.remove();
+      });
+      dropList.childNodes[0]?.click();
+      if (dropList.childNodes.length === 0) {
+        console.log("All placed");
+        console.log(shipsArray);
+        localStorage.setItem("shipdata", JSON.stringify(shipsArray));
+        resolve();
+      }
+    }
+
+    // Event listeners
     document.querySelectorAll("td").forEach((td) => {
-      td.addEventListener("mouseover", () => {
-        let shipName = document
-          .getElementsByClassName("dropdown-btn")[0]
-          .innerText.split(" ")[0];
-        let orientation = document
-          .getElementsByClassName("toggle-btn")[0]
-          .innerText.split(" ")[1];
+      td.addEventListener("mouseleave", () => {
+        document
+          .querySelectorAll("td")
+          .forEach((cell) => cell.classList.remove("hover"));
+      });
 
-        //
-        document.querySelectorAll("td").forEach((td) => {
-          td.classList.remove("hover");
-          td.classList.remove("hover-red");
-        });
+      td.addEventListener("mouseover", (e) => {
+        const x = e.target.cellIndex;
+        const y = e.target.parentNode.rowIndex;
+        const shipName = dropBtn.innerText.split(" ")[0];
+        const orientation = horizontal ? "Horizontal" : "Vertical";
+        const length = new Ship(shipName).length;
+        if (isPositionValid(x, y, length, orientation)) {
+          highlightCells(x, y, length, orientation);
+        }
+      });
 
-        switch (shipName) {
-          case "Carrier":
-          case "Battleship":
-          case "Cruiser":
-          case "Destroyer":
-          case "Submarine": {
-            function highlightCells(length, x, y, orientation) {
-              const table = document.getElementsByTagName("table")[0];
-              let outOfBounds = false;
-
-              if (orientation === "Horizontal") {
-                for (let i = 0; i < length; i++) {
-                  if (!table.rows[x] || !table.rows[x].cells[y + i]) {
-                    outOfBounds = true;
-                    break;
-                  }
-                }
-                for (let i = 0; i < length; i++) {
-                  const cell = table.rows[x]?.cells[y + i];
-                  if (cell) {
-                    cell.classList.add(outOfBounds ? "hover-red" : "hover");
-                  }
-                }
-              } else {
-                for (let i = 0; i < length; i++) {
-                  if (!table.rows[x + i] || !table.rows[x + i].cells[y]) {
-                    outOfBounds = true;
-                    break;
-                  }
-                }
-                for (let i = 0; i < length; i++) {
-                  const cell = table.rows[x + i]?.cells[y];
-                  if (cell) {
-                    cell.classList.add(outOfBounds ? "hover-red" : "hover");
-                  }
-                }
-              }
-            }
-
-            let length = new Ship(shipName).length;
-            let x = td.parentElement.rowIndex;
-            let y = td.cellIndex;
-
-            highlightCells(length, x, y, orientation);
-            break;
-          }
+      td.addEventListener("click", (e) => {
+        const x = e.target.cellIndex;
+        const y = e.target.parentNode.rowIndex;
+        const shipName = dropBtn.innerText.split(" ")[0];
+        const orientation = horizontal ? "Horizontal" : "Vertical";
+        const length = new Ship(shipName).length;
+        if (isPositionValid(x, y, length, orientation)) {
+          shipsArray.push({ shipName, coords: { x, y }, orientation });
+          placeShip(x, y, length, orientation, shipName);
         }
       });
     });
