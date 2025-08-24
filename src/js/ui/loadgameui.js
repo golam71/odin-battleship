@@ -5,6 +5,24 @@ import Ship from "../ship.js";
 // Create global game objects
 let player, computer;
 
+// Precompute all coordinates for the computer to attack
+const computerTargets = [];
+for (let y = 0; y < 10; y++) {
+  for (let x = 0; x < 10; x++) {
+    computerTargets.push([x, y]);
+  }
+}
+
+// Shuffle function
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+shuffle(computerTargets);
+
 function placeComputerShips() {
   const ships = ["Carrier", "Battleship", "Cruiser", "Destroyer", "Submarine"];
 
@@ -85,7 +103,6 @@ export default function loadui() {
       }[shipName];
       const table = document.getElementById("playerTable");
 
-      // Create ship object and place on gameboard
       const ship = new Ship(shipName);
       const way = orientation.toLowerCase();
       player.gameboard.placeShip(ship, [x, y], way);
@@ -147,10 +164,7 @@ function attackComputer(x, y) {
   const computerTable = document.getElementById("computerTable");
   const cell = computerTable.rows[y].cells[x];
 
-  // Check if already attacked
-  if (cell.classList.contains("hit") || cell.classList.contains("miss")) {
-    return;
-  }
+  if (cell.classList.contains("hit") || cell.classList.contains("miss")) return;
 
   computer.gameboard.receiveAttack([x, y]);
   const cellData = computer.gameboard.board[y][x];
@@ -160,15 +174,12 @@ function attackComputer(x, y) {
     cell.innerText = "🚢";
     cell.style.backgroundColor = "red";
 
-    // Check win condition
     if (computer.gameboard.allShipsSunk()) {
       setTimeout(() => {
         document.getElementById(
           "computerTableInfo"
         ).innerHTML = `<p>Ships: 0/5</p>`;
-        if (confirm("You won! Play again?")) {
-          location.reload();
-        }
+        if (confirm("You won! Play again?")) location.reload();
       }, 100);
       return;
     }
@@ -185,43 +196,32 @@ function attackComputer(x, y) {
 }
 
 function computerAttack() {
-  let attacked = false;
+  if (computerTargets.length === 0) return; // all cells attacked
 
-  while (!attacked) {
-    const x = Math.floor(Math.random() * 10);
-    const y = Math.floor(Math.random() * 10);
-    const playerTable = document.getElementById("playerTable");
-    const cell = playerTable.rows[y].cells[x];
+  const [x, y] = computerTargets.pop();
+  const playerTable = document.getElementById("playerTable");
+  const cell = playerTable.rows[y].cells[x];
 
-    // Skip if already attacked
-    if (cell.classList.contains("hit") || cell.classList.contains("miss")) {
-      continue;
+  player.gameboard.receiveAttack([x, y]);
+  const cellData = player.gameboard.board[y][x];
+
+  if (cellData?.status === "hit") {
+    cell.classList.add("hit");
+    cell.style.backgroundColor = "red";
+
+    if (player.gameboard.allShipsSunk()) {
+      document.getElementById(
+        "playerTableInfo"
+      ).innerHTML = `<p>Ships: 0/5</p>`;
+      setTimeout(() => {
+        if (confirm("Computer won! Play again?")) location.reload();
+      }, 100);
+      return;
     }
-
-    player.gameboard.receiveAttack([x, y]);
-    const cellData = player.gameboard.board[y][x];
-
-    if (cellData?.status === "hit") {
-      cell.classList.add("hit");
-      cell.style.backgroundColor = "red";
-
-      if (player.gameboard.allShipsSunk()) {
-        document.getElementById(
-          "playerTableInfo"
-        ).innerHTML = `<p>Ships: 0/5</p>`;
-        setTimeout(() => {
-          if (confirm("Computer won! Play again?")) {
-            location.reload();
-          }
-        }, 100);
-        return;
-      }
-    } else {
-      cell.classList.add("miss");
-      cell.style.backgroundColor = "lightblue";
-    }
-
-    updateInfo();
-    attacked = true;
+  } else {
+    cell.classList.add("miss");
+    cell.style.backgroundColor = "lightblue";
   }
+
+  updateInfo();
 }
